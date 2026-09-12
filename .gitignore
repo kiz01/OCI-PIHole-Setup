@@ -1,0 +1,61 @@
+# Secrets and environment files
+
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+
+# Private keys and certificates
+
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.jks
+
+# Pi-hole runtime and generated data
+
+gravity.db
+gravity_old.db
+pihole-FTL.db
+pihole-FTL.db-*
+dhcp.leases
+*.log
+
+# Pi-hole generated/cache directories
+
+listsCache/
+gravity_backups/
+config_backups/
+migration_backup/
+
+# Runtime directories
+
+*.sock
+/run/
+
+# Docker/runtime data
+
+docker_data/
+*_data/
+
+# OS/editor files
+
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary files
+
+tmp/
+temp/
+*.tmp
+
+# Local testing/output
+
+output/
+results/
