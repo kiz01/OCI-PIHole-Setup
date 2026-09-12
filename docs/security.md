@@ -570,6 +570,23 @@ Review:
 
 The effective security posture should be determined from the combination of these controls.
 
+### External exposure testing
+
+External testing from outside the OCI network confirmed that:
+
+* TCP/22 is filtered
+* TCP/53 is filtered
+* TCP/80 is filtered
+* TCP/443 is filtered
+* TCP/8080 is filtered
+* TCP/8443 is filtered
+* TCP/8090 is filtered
+* External DNS queries over UDP/53 and TCP/53 do not receive a response
+
+This confirms that the currently tested administrative, web, monitoring, and DNS services are not reachable through the public OCI address.
+
+These results reflect the deployment at the time of testing and should be re-verified after network or firewall changes.
+
 ---
 
 ## 22. Security Review Checklist
