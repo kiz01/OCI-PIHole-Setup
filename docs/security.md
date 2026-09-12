@@ -526,7 +526,7 @@ These are documented characteristics of the current system rather than claims th
 
 Security should be verified from the outside as well as from the configuration.
 
-Useful checks include:
+The following checks were performed against the current deployment.
 
 ### Listening services
 
@@ -534,11 +534,15 @@ Useful checks include:
 sudo ss -tulpn
 ```
 
+This was used to verify the services and interfaces currently listening on the host.
+
 ### Docker containers
 
 ```bash
 docker ps
 ```
+
+The running container set was reviewed to verify the active Pi-hole and monitoring services.
 
 ### Tailscale status
 
@@ -546,11 +550,181 @@ docker ps
 sudo tailscale status
 ```
 
+Tailscale connectivity was verified between the server and authorized client devices.
+
+Administrative SSH access through the Tailscale network was confirmed.
+
 ### Unbound status
 
 ```bash
 sudo systemctl status unbound
 ```
+
+Unbound was confirmed to be running and providing the local recursive DNS service.
+
+### Unbound listener
+
+```bash
+sudo ss -lntup | grep ':5335'
+```
+
+Unbound was confirmed to listen only on:
+
+```text
+127.0.0.1:5335
+```
+
+for both UDP and TCP.
+
+This prevents remote clients from directly accessing the recursive resolver.
+
+### Pi-hole upstream
+
+```bash
+docker exec pihole pihole-FTL --config dns.upstreams
+```
+
+The configured upstream was verified as:
+
+```text
+127.0.0.1#5335
+```
+
+This confirms that Pi-hole forwards permitted DNS queries to the local Unbound instance.
+
+### Unbound DNS resolution and DNSSEC
+
+A direct query to Unbound was tested:
+
+```bash
+dig @127.0.0.1 -p 5335 example.com
+```
+
+The response completed successfully.
+
+A DNSSEC-enabled query was also tested:
+
+```bash
+dig @127.0.0.1 -p 5335 cloudflare.com +dnssec
+```
+
+The response included the `AD` flag, confirming authenticated DNSSEC validation by Unbound.
+
+### Pi-hole filtering
+
+The active blocklist was checked before testing a blocked domain:
+
+```bash
+docker exec pihole pihole -q -exact doubleclick.net
+```
+
+The domain was found in the configured StevenBlack hosts list.
+
+The query was then sent through Pi-hole:
+
+```bash
+dig @127.0.0.1 doubleclick.net
+```
+
+The response returned:
+
+```text
+doubleclick.net.  2  IN  A  0.0.0.0
+```
+
+This confirms that Pi-hole filtering is active and that the configured `NULL` blocking mode is functioning.
+
+### Allowed DNS resolution
+
+A normal DNS query was also tested through Pi-hole:
+
+```bash
+dig @127.0.0.1 example.com
+```
+
+The query returned valid A records.
+
+This confirms that normal DNS resolution continues to work for domains that are not blocked.
+
+### Tailscale client DNS verification
+
+An authorized Tailscale client was inspected using:
+
+```bash
+tailscale dns status
+```
+
+The client was configured by Tailscale to use the Pi-hole server as its preferred DNS resolver.
+
+Normal client-side DNS resolution was then tested without specifying a DNS server:
+
+```bash
+dig example.com
+```
+
+The query returned valid A records.
+
+A blocked-domain test was also performed:
+
+```bash
+dig doubleclick.net
+```
+
+The response returned:
+
+```text
+doubleclick.net.  2  IN  A  0.0.0.0
+```
+
+This confirms the end-to-end client path:
+
+```text
+Authorized client
+       │
+       ▼
+Tailscale DNS
+       │
+       ▼
+Pi-hole :53
+       │
+       ▼
+Unbound :5335
+```
+
+with Pi-hole filtering applied to client DNS requests.
+
+### External exposure verification
+
+External connectivity was tested from outside the OCI instance.
+
+The following TCP ports were tested against the OCI public address:
+
+```text
+22/tcp
+53/tcp
+80/tcp
+443/tcp
+8080/tcp
+8090/tcp
+8443/tcp
+```
+
+The tested TCP ports were reported as `filtered`.
+
+DNS over UDP was also tested externally. The scanner reported UDP/53 as `open|filtered`, so that result alone was not treated as proof of accessibility.
+
+A direct DNS query was therefore performed:
+
+```bash
+dig @<OCI_PUBLIC_IP> example.com
+dig +tcp @<OCI_PUBLIC_IP> example.com
+```
+
+Both queries timed out without receiving a DNS response.
+
+This provides stronger evidence that the Pi-hole DNS service is not responding to unsolicited public DNS queries.
+
+Public SSH was also reported as filtered, while SSH through the Tailscale network was verified successfully.
 
 ### Host firewall status
 
@@ -558,34 +732,27 @@ sudo systemctl status unbound
 sudo ufw status verbose
 ```
 
+UFW is currently inactive and is therefore not considered part of the security boundary.
+
 ### OCI network configuration
 
 Review:
 
-* Route tables
-* Security Lists
-* Network Security Groups
-* VNIC attachments
-* Subnet configuration
+- Route tables
+- Security Lists
+- Network Security Groups
+- VNIC attachments
+- Subnet configuration
 
-The effective security posture should be determined from the combination of these controls.
+The effective security posture should be determined from the combination of these controls rather than from application configuration alone.
 
-### External exposure testing
+### Verification principle
 
-External testing from outside the OCI network confirmed that:
+Configuration inspection establishes what the system is intended to do.
 
-* TCP/22 is filtered
-* TCP/53 is filtered
-* TCP/80 is filtered
-* TCP/443 is filtered
-* TCP/8080 is filtered
-* TCP/8443 is filtered
-* TCP/8090 is filtered
-* External DNS queries over UDP/53 and TCP/53 do not receive a response
+External and end-to-end testing establishes what the system actually does.
 
-This confirms that the currently tested administrative, web, monitoring, and DNS services are not reachable through the public OCI address.
-
-These results reflect the deployment at the time of testing and should be re-verified after network or firewall changes.
+Both should be used when evaluating the security posture of the deployment.
 
 ---
 
