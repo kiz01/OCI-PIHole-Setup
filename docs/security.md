@@ -341,7 +341,7 @@ The Beszel agent has access to:
 
 with read-only access from the container.
 
-Although the mount is read-only, Docker's Unix socket is highly sensitive because access to the Docker API can provide significant control over the container runtime depending on the API permissions available.
+Although the socket is mounted with a read-only filesystem flag, access to the Docker API through the socket remains security-sensitive because the Docker API can provide significant control over the container runtime depending on the permissions available.
 
 Therefore:
 
