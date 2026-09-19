@@ -743,7 +743,7 @@ Both should be used when evaluating the security posture of the deployment.
 Before exposing the system to a new network or changing its architecture:
 
 * [x] Verify OCI ingress rules
-* [ ] Verify Network Security Groups, if used
+* [-] Verify Network Security Groups, if used
 * [x] Verify host listeners
 * [x] Verify Docker published ports
 * [x] Verify Pi-hole DNS exposure
@@ -752,8 +752,8 @@ Before exposing the system to a new network or changing its architecture:
 * [x] Verify Tailscale access
 * [x] Check container capabilities
 * [x] Review Docker socket mounts
-* [ ] Check for secrets before committing
-* [ ] Review `.gitignore`
+* [x] Check for secrets before committing
+* [x] Review `.gitignore`
 * [x] Test DNS from an authorized client
 * [x] Confirm unauthorized DNS access is blocked
 * [x] Review logs for unexpected activity
