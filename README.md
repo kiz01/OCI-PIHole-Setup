@@ -16,7 +16,7 @@ The system combines:
 * **Tailscale** — private network access to the server
 * **Beszel** — optional host/container monitoring
 
-The goal of this repository is to document the deployment, architecture, networking, DNS flow, and security considerations of the running system.
+The goal of this repository is to document the deployment, architecture, networking, DNS flow, security considerations, hardening decisions, and manual rebuild process of the running system.
 
 > **Status:** This repository documents the current working deployment. It is not intended to represent every possible Pi-hole or OCI configuration.
 
@@ -88,6 +88,8 @@ The current deployment uses Pi-hole 6.x.
 
 Pi-hole receives client DNS requests on port `53` and forwards permitted queries to the local Unbound resolver.
 
+The current deployment does not require the Docker `NET_ADMIN` capability.
+
 ### Unbound
 
 Unbound provides recursive DNS resolution for Pi-hole.
@@ -119,6 +121,12 @@ Pi-hole runs as a Docker container with persistent configuration stored outside 
 The deployment uses Docker Compose.
 
 Persistent Pi-hole data includes configuration and database files under the deployment directory.
+
+### Beszel
+
+Beszel provides optional host and container monitoring.
+
+The current deployment keeps the Beszel agent without access to the Docker socket.
 
 ---
 
@@ -174,7 +182,15 @@ Important considerations include:
 
 Pi-hole's DNS listener is configured to listen broadly at the application level, so **network-level access controls are an important part of the security boundary**.
 
-See [`docs/security.md`](docs/security.md) for the detailed security model.
+Additional hardening includes:
+
+* Pi-hole running without `NET_ADMIN`
+* Pi-hole's built-in NTP listener disabled
+* Unbound restricted to localhost
+* Beszel agent running without Docker socket access
+* Runtime state and credentials excluded from version control
+
+See [`docs/security.md`](docs/security.md) for the detailed security model and [`docs/hardening-log.md`](docs/hardening-log.md) for the documented hardening history.
 
 ---
 
@@ -185,23 +201,61 @@ See [`docs/security.md`](docs/security.md) for the detailed security model.
 ├── README.md
 ├── LICENSE
 ├── .gitignore
-└── docs/
-    ├── architecture.md
-    ├── networking.md
-    ├── dns-stack.md
-    └── security.md
+├── docs/
+│   ├── architecture.md
+│   ├── networking.md
+│   ├── dns-stack.md
+│   ├── security.md
+│   ├── hardening-log.md
+│   └── rebuild.md
+└── examples/
+    ├── pihole/
+    │   └── compose.yaml
+    ├── unbound/
+    │   └── pi-hole.conf
+    └── beszel/
+        └── compose.yaml
 ```
 
 ---
 
 ## Documentation
 
-| Document                                  | Description                                              |
-| ----------------------------------------- | -------------------------------------------------------- |
-| [`architecture.md`](docs/architecture.md) | Overall system architecture and component relationships  |
-| [`networking.md`](docs/networking.md)     | OCI, Ubuntu, Docker, and Tailscale networking            |
-| [`dns-stack.md`](docs/dns-stack.md)       | Pi-hole → Unbound DNS resolution flow                    |
-| [`security.md`](docs/security.md)         | Security boundaries, risks, and hardening considerations |
+| Document | Description |
+| --- | --- |
+| [`architecture.md`](docs/architecture.md) | Overall system architecture and component relationships |
+| [`networking.md`](docs/networking.md) | OCI, Ubuntu, Docker, and Tailscale networking |
+| [`dns-stack.md`](docs/dns-stack.md) | Pi-hole → Unbound DNS resolution flow |
+| [`security.md`](docs/security.md) | Security boundaries, risks, and hardening considerations |
+| [`hardening-log.md`](docs/hardening-log.md) | Chronological record of hardening changes and verification |
+| [`rebuild.md`](docs/rebuild.md) | Manual rebuild procedure and post-rebuild verification |
+
+---
+
+## Configuration Examples
+
+The [`examples/`](examples/) directory contains sanitized reference configurations for the main services.
+
+These examples:
+
+* Use placeholders for secrets and deployment-specific values
+* Do not contain real infrastructure addresses or credentials
+* Reflect the security-relevant configuration of the current deployment
+* Are intended as reference material rather than automated deployment files
+
+Before rebuilding the system, review the current official documentation for the relevant software and adapt these examples to the versions being deployed.
+
+---
+
+## Rebuild Approach
+
+This project intentionally does **not** provide an automated installation or deployment script.
+
+The rebuild process is documented as a manual procedure in [`docs/rebuild.md`](docs/rebuild.md).
+
+This approach is intentional: infrastructure software, package versions, installation procedures, and cloud-provider interfaces can change over time. A manually verified rebuild is preferred over blindly following a potentially outdated automation script.
+
+The documentation and sanitized configuration examples serve as reference material. A future rebuild should always verify the current upstream installation and configuration requirements before proceeding.
 
 ---
 
@@ -229,6 +283,8 @@ generated cache files
 ```
 
 Configuration examples should use placeholders instead of real credentials or infrastructure identifiers.
+
+Runtime state such as Pi-hole databases, query logs, DHCP leases, TLS private material, Docker application data, and Tailscale state should remain on the server and outside version control.
 
 ---
 
