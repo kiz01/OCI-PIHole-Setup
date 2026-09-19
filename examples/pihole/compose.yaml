@@ -1,0 +1,18 @@
+services:
+  pihole:
+    image: pihole/pihole:2026.07.2
+    container_name: pihole
+    network_mode: host
+    restart: unless-stopped
+    hostname: pihole
+
+    environment:
+      TZ: "Asia/Kolkata"
+      FTLCONF_webserver_api_password: "<PIHOLE_PASSWORD>"
+      FTLCONF_dns_upstreams: "127.0.0.1#5335"
+      FTLCONF_webserver_port: "8080o,[::]:8080os,[::]:8443os"
+      DNSMASQ_LISTENING: "local"
+
+    volumes:
+      - ./etc-pihole:/etc/pihole
+      - ./etc-dnsmasq.d:/etc/dnsmasq.d
