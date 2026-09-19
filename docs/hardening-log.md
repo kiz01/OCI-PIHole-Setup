@@ -422,7 +422,7 @@ The current Pi-hole DNS listener is broadly bound, while the web interface has a
 
 Listener bindings will be reviewed separately to determine whether individual services can be bound more narrowly without breaking the intended DNS and administration workflows.
 
-No listener binding has been changed as part of this review yet.
+No additional listener binding changes were made as part of this review. Existing listener exposure was reviewed and validated against the intended network and access controls.
 
 ---
 
@@ -432,13 +432,13 @@ The following hardening work remains:
 
 - [x] Determine whether Pi-hole requires `NET_ADMIN`
 - [x] Determine whether Pi-hole NTP is required
-- [ ] Review remaining Docker capabilities
-- [ ] Review Pi-hole DNS and web listener bindings
-- [ ] Perform final external exposure validation
-- [ ] Review retained host services
-- [ ] Verify the final runtime security posture
-- [ ] Consolidate completed findings into `docs/security.md`
-- [ ] Perform final repository information-disclosure review
+- [x] Review remaining Docker capabilities
+- [x] Review Pi-hole DNS and web listener bindings
+- [x] Perform final external exposure validation
+- [x] Review retained host services
+- [x] Verify the final runtime security posture
+- [x] Consolidate completed findings into `docs/security.md`
+- [x] Perform final repository information-disclosure review
 - [ ] Decide whether the repository is ready to become public
 
 No live configuration should be changed without the one-change → verify methodology used throughout this hardening process.

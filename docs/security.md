@@ -742,21 +742,21 @@ Both should be used when evaluating the security posture of the deployment.
 
 Before exposing the system to a new network or changing its architecture:
 
-* [ ] Verify OCI ingress rules
+* [x] Verify OCI ingress rules
 * [ ] Verify Network Security Groups, if used
-* [ ] Verify host listeners
-* [ ] Verify Docker published ports
-* [ ] Verify Pi-hole DNS exposure
-* [ ] Verify Unbound remains localhost-only
-* [ ] Verify SSH access path
-* [ ] Verify Tailscale access
+* [x] Verify host listeners
+* [x] Verify Docker published ports
+* [x] Verify Pi-hole DNS exposure
+* [x] Verify Unbound remains localhost-only
+* [x] Verify SSH access path
+* [x] Verify Tailscale access
 * [x] Check container capabilities
 * [x] Review Docker socket mounts
 * [ ] Check for secrets before committing
 * [ ] Review `.gitignore`
-* [ ] Test DNS from an authorized client
-* [ ] Confirm unauthorized DNS access is blocked
-* [ ] Review logs for unexpected activity
+* [x] Test DNS from an authorized client
+* [x] Confirm unauthorized DNS access is blocked
+* [x] Review logs for unexpected activity
 
 ---
 
