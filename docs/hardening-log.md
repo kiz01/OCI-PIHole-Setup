@@ -368,27 +368,45 @@ Removing a capability without establishing its requirement could break required 
 
 ### NTP
 
-**Status: Under review**
+**Status: Completed**
 
-Pi-hole FTL currently provides NTP functionality.
+Pi-hole FTL previously had its NTP server functionality enabled.
 
-The host itself has working system time synchronization.
+The host itself has working system time synchronization, so the Pi-hole NTP server was determined to be unnecessary for this deployment.
 
-Pi-hole logs indicate that its NTP client cannot set the system clock because `CAP_SYS_TIME` is not available, while the NTP server remains active.
+The Pi-hole NTP server was disabled for both IPv4 and IPv6.
 
-No change has been made yet.
+Verification confirmed:
 
-The requirement for Pi-hole NTP will be evaluated together with the `NET_ADMIN` review.
+- `ntp.ipv4.active = false`
+- `ntp.ipv6.active = false`
+- no UDP/123 listener remains
+- Pi-hole DNS remains healthy and functional
+- host time synchronization remains unaffected
+
+The change was validated after the container restart.
 
 ### Docker capabilities
 
-**Status: Under review**
+**Status: Completed**
 
-The remaining capabilities granted to the Pi-hole container have not yet been fully reviewed.
+The Pi-hole container previously had `CAP_NET_ADMIN` explicitly added.
 
-The next step is to determine which capabilities are actually required by the current Pi-hole configuration and whether any can be safely removed.
+The capability was reviewed against the current deployment configuration. DHCP is disabled, Pi-hole's NTP server is disabled, and no other requirement for `NET_ADMIN` was identified.
 
-No capability will be removed solely for the purpose of reducing a count; each change will be validated against the required functionality.
+`CAP_NET_ADMIN` was removed from the Compose configuration and the Pi-hole container was recreated.
+
+Verification confirmed:
+
+- container remained healthy
+- DNS resolution remained functional
+- Pi-hole blocking remained functional
+- Unbound DNSSEC validation remained functional
+- Pi-hole web interface remained accessible over Tailscale
+- no new `NET_ADMIN` or network permission errors appeared in the FTL log
+- the capability remained absent after subsequent runtime verification
+
+`NET_ADMIN` is therefore not required by the current deployment configuration.
 
 ---
 
@@ -412,8 +430,8 @@ No listener binding has been changed as part of this review yet.
 
 The following hardening work remains:
 
-- [ ] Determine whether Pi-hole requires `NET_ADMIN`
-- [ ] Determine whether Pi-hole NTP is required
+- [x] Determine whether Pi-hole requires `NET_ADMIN`
+- [x] Determine whether Pi-hole NTP is required
 - [ ] Review remaining Docker capabilities
 - [ ] Review Pi-hole DNS and web listener bindings
 - [ ] Perform final external exposure validation

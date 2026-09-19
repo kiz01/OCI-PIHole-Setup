@@ -312,20 +312,20 @@ This means container compromise must be considered in the context of host networ
 
 ## 12. Pi-hole Capabilities
 
-The Pi-hole container currently has:
+The Pi-hole container does not currently add `NET_ADMIN`.
 
-```yaml id="t2l2mz"
-cap_add:
-  - NET_ADMIN
-```
+The capability was previously granted explicitly, but was removed after verifying that the current deployment does not require it.
 
-`NET_ADMIN` is a privileged Linux capability relative to an otherwise restricted container.
+The container was recreated without the capability and verified for:
 
-It should therefore be considered part of the Pi-hole container's security boundary.
+- healthy container state
+- DNS resolution
+- Pi-hole blocking
+- Unbound DNSSEC validation
+- Tailscale web access
+- absence of new capability-related networking errors
 
-Capabilities should only be granted when required by the application.
-
-The current configuration is documented as-is rather than being changed as part of this documentation project.
+This reduces the container's privilege without changing the intended DNS and administration workflows.
 
 ---
 
@@ -333,21 +333,11 @@ The current configuration is documented as-is rather than being changed as part 
 
 Beszel is deployed as a supporting monitoring service.
 
-The Beszel agent has access to:
+The Beszel agent does not have access to the Docker socket.
 
-```text id="2o0t9a"
-/var/run/docker.sock
-```
+The Docker socket mount was removed from the agent configuration as part of the security hardening process.
 
-with read-only access from the container.
-
-Although the socket is mounted with a read-only filesystem flag, access to the Docker API through the socket remains security-sensitive because the Docker API can provide significant control over the container runtime depending on the permissions available.
-
-Therefore:
-
-> The Docker socket mount is treated as a high-value security consideration.
-
-The monitoring service should be kept appropriately restricted and trusted.
+The agent retains access only to its dedicated application data directory.
 
 ---
 
@@ -501,14 +491,6 @@ Applications using alternative encrypted DNS mechanisms may bypass conventional 
 ### Pi-hole uses host networking
 
 Host networking reduces Docker network isolation.
-
-### Pi-hole has NET_ADMIN
-
-The container has an additional Linux capability that increases its privilege relative to a capability-minimized container.
-
-### Beszel accesses the Docker socket
-
-The monitoring agent has read-only access to the Docker socket, which remains a sensitive host interface.
 
 ### Broad Pi-hole listener
 
@@ -768,8 +750,8 @@ Before exposing the system to a new network or changing its architecture:
 * [ ] Verify Unbound remains localhost-only
 * [ ] Verify SSH access path
 * [ ] Verify Tailscale access
-* [ ] Check container capabilities
-* [ ] Review Docker socket mounts
+* [x] Check container capabilities
+* [x] Review Docker socket mounts
 * [ ] Check for secrets before committing
 * [ ] Review `.gitignore`
 * [ ] Test DNS from an authorized client
