@@ -15,9 +15,9 @@ The architecture separates DNS filtering, recursive resolution, private network 
                                     │ DNS :53
                                     ▼
                          ┌──────────────────────┐
-                         │       Pi-hole       │
-                         │                     │
-                         │ DNS filtering       │
+                         │       Pi-hole        │
+                         │                      │
+                         │ DNS filtering        │
                          │ Blocklists           │
                          │ DNS cache            │
                          │ Query logging        │
@@ -27,7 +27,7 @@ The architecture separates DNS filtering, recursive resolution, private network 
                                     ▼
                          ┌──────────────────────┐
                          │       Unbound        │
-                         │                     │
+                         │                      │
                          │ Recursive resolver   │
                          │ DNSSEC validation    │
                          │ QNAME minimisation   │
@@ -47,6 +47,7 @@ Administrative access uses a separate private connectivity path:
 ```text
                     ┌─────────────────────┐
                     │   Administrator     │
+                    │   / Tailscale       │
                     └──────────┬──────────┘
                                │
                                │ Tailscale
@@ -58,7 +59,18 @@ Administrative access uses a separate private connectivity path:
                     │ Docker              │
                     │ Pi-hole             │
                     │ Unbound             │
-                    └─────────────────────┘
+                    │ Tailscale Exit Node │
+                    └─────────┬───────────┘
+                              │
+                              │ Optional Internet egress
+                              ▼
+                    ┌─────────────────────┐
+                    │ OCI Internet        │
+                    │ Gateway             │
+                    └─────────┬───────────┘
+                              │
+                              ▼
+                           Internet
 ```
 
 ---
@@ -96,6 +108,10 @@ The host provides:
 * System-level process and resource management
 
 SSH administration is performed through the private Tailscale network rather than relying on direct public SSH access.
+
+The host also provides IPv4 and IPv6 forwarding required for the Tailscale exit-node function.
+
+The exit node is optional and can be enabled independently on authorized Tailscale clients.
 
 ---
 
@@ -191,11 +207,52 @@ Root / authoritative DNS infrastructure
 
 ---
 
-## 7. Private Access Layer
+## 7. Private Access and Exit-Node Layer
 
 Tailscale provides private network connectivity to the server.
 
 This is used for administrative access and allows trusted devices to reach services without requiring those services to be exposed directly to the public Internet.
+
+The OCI server is also configured as an optional Tailscale exit node.
+
+When a client selects the exit node, its general Internet traffic is routed through the OCI server and exits through the OCI Internet Gateway.
+
+```text
+Trusted network:
+
+Client
+  │
+  │ Tailscale
+  ▼
+OCI Server
+  │
+  └── Private services
+
+Exit node disabled
+
+
+Public / untrusted network:
+
+Client
+  │
+  │ Tailscale
+  ▼
+OCI Server
+  │
+  ├── DNS → Pi-hole → Unbound
+  │
+  └── Internet traffic
+          │
+          ▼
+     OCI Internet Gateway
+          │
+          ▼
+       Internet
+
+Exit node enabled
+```
+
+The exit node is not required for normal Pi-hole operation. Clients can use Tailscale for private access while keeping their normal Internet connection.
 
 The public documentation intentionally does not publish:
 
@@ -269,6 +326,20 @@ Administrative access is provided through Tailscale.
 
 SSH credentials are not stored in this repository.
 
+### Client → OCI Exit Node
+
+When the Tailscale exit node is enabled, the client becomes dependent on the OCI server for general Internet egress.
+
+This introduces an additional forwarding and network trust boundary.
+
+Exit-node forwarding should therefore be treated separately from the DNS filtering function.
+
+### OCI Server → Internet
+
+Exit-node traffic leaves the infrastructure through the OCI Internet Gateway.
+
+The OCI network configuration remains responsible for controlling the server's externally reachable services; exit-node forwarding does not replace those controls.
+
 ### Internet → Server
 
 Public network access is controlled at the OCI networking layer and must be reviewed independently of Pi-hole configuration.
@@ -287,6 +358,8 @@ The deployment follows a layered security model:
 ├───────────────────────────────────────────┤
 │ Tailscale private connectivity            │
 ├───────────────────────────────────────────┤
+│ Optional Tailscale exit-node forwarding   │
+├───────────────────────────────────────────┤
 │ Ubuntu host                               │
 ├───────────────────────────────────────────┤
 │ Docker isolation                          │
@@ -300,6 +373,8 @@ The deployment follows a layered security model:
 No single component is intended to provide all security controls.
 
 In particular, DNS filtering and firewalling are separate responsibilities.
+
+The exit-node function is an optional network capability and is not required for DNS filtering or private service access.
 
 ---
 
