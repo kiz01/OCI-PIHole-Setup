@@ -160,6 +160,13 @@ Beszel provides optional host and container monitoring.
 
 The current deployment keeps the Beszel agent without access to the Docker socket.
 
+### Alerting
+
+The deployment includes automated health checks for Pi-hole, Unbound, Tailscale, and internet connectivity, with Telegram notifications for detected failures and recovery.
+
+See [Alerting](docs/monitoring.md) for the monitored components, alerting behavior, systemd configuration, troubleshooting commands, and known limitations.
+
+
 ---
 
 ## OCI Network
